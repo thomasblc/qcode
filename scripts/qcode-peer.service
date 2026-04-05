@@ -1,0 +1,20 @@
+[Unit]
+Description=qcode peer-provider (QVAC delegated inference over Hyperswarm)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tom
+WorkingDirectory=/home/tom/qcode-peer
+Environment=QCODE_PEER_SEED=0000000000000000000000000000000000000000000000000000000000000042
+# Resolve node via /usr/bin/env so nvm-managed installs work without
+# hard-coding an interpreter path. Adjust if node is at a fixed path.
+ExecStart=/usr/bin/env node peer-provider.mjs
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/home/tom/qcode-peer/peer-provider.log
+StandardError=append:/home/tom/qcode-peer/peer-provider.log
+
+[Install]
+WantedBy=multi-user.target

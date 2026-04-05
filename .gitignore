@@ -1,0 +1,22 @@
+node_modules/
+dist/
+*.log
+.env
+.env.*
+.DS_Store
+
+# Large binaries and models. The SDK caches weights under ~/.qvac/models.
+*.gguf
+peer-provider.log
+
+# Session state. Contains the shared-secret auth key and sessions.json.
+.qcode-state/
+
+# Local Claude Code tooling config (launch.json, settings.local.json).
+.claude/
+
+# Private working notes (kept in a sibling qcode-building/ dir, not here).
+.notes/
+
+# LLM demo artefacts dropped at the repo root during live sessions.
+/*.html

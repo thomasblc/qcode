@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="qcode" />
+  <meta name="theme-color" content="#171817" />
+  <title>qcode</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- Onboarding: first-visit wizard -->
+  <section id="onboarding" class="screen-setup" hidden>
+    <div class="setup-box" style="max-width:560px">
+      <div id="obStep1" class="ob-step">
+        <h2 style="color:var(--qvac-green);font-family:var(--mono);font-weight:600">qcode</h2>
+        <p class="muted">a local coding agent built on <strong>QVAC Fabric LLM</strong>. runs on your Mac, controlled from your phone. no cloud, no api keys, no data leaving your machine.</p>
+        <div style="margin-top:20px;padding:16px;border:1px solid var(--qvac-border-teal);border-radius:8px;background:var(--qvac-card-glow)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <span style="font-size:18px">🔒</span>
+            <strong style="color:var(--qvac-green)">100% on-device</strong>
+          </div>
+          <p class="muted small">every inference runs locally. your code, your prompts, your files: all stay on your Mac.</p>
+        </div>
+        <button id="obNext1" class="primary" style="margin-top:20px">get started →</button>
+      </div>
+
+      <div id="obStep2" class="ob-step" hidden>
+        <h2 style="color:var(--qvac-green)">connect</h2>
+        <p class="muted small">paste the auth key from your terminal (printed when you ran <code>npm run serve</code>).</p>
+        <input id="obKeyInput" type="text" placeholder="auth key" autocomplete="off" spellcheck="false" />
+        <div class="row" style="gap:8px">
+          <input id="obRootInput" type="text" placeholder="project root" style="flex:1" />
+          <button id="obBrowseBtn">browse</button>
+        </div>
+        <div class="row" style="justify-content:space-between;margin-top:12px">
+          <button id="obBack2">back</button>
+          <button id="obNext2" class="primary">next →</button>
+        </div>
+      </div>
+
+      <div id="obStep3" class="ob-step" hidden>
+        <h2 style="color:var(--qvac-green)">pick a coding model</h2>
+        <p class="muted small">recommended models for <span id="obRamInfo">your Mac</span>. you can change later.</p>
+        <div id="obModelList" style="display:flex;flex-direction:column;gap:10px;margin:12px 0;max-height:340px;overflow:auto"></div>
+        <div class="row" style="justify-content:space-between">
+          <button id="obBack3">back</button>
+          <button id="obNext3" class="primary">next →</button>
+        </div>
+      </div>
+
+      <div id="obStep4" class="ob-step" hidden>
+        <h2 style="color:var(--qvac-green)">optional features</h2>
+        <p class="muted small">enable any combination. models download on demand, you can change later.</p>
+        <div id="obFeatureList" style="display:flex;flex-direction:column;gap:10px;margin:16px 0"></div>
+        <div class="row" style="justify-content:space-between">
+          <button id="obBack4">back</button>
+          <button id="obFinish" class="primary">finish →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Settings screen (tabbed: config / features) -->
+  <section id="setup" class="screen-setup" hidden>
+    <div class="setup-box" style="max-width:560px">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h2>settings</h2>
+        <button id="setupClose" class="icon-btn" title="close">✕</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="config">config</button>
+        <button class="tab" data-tab="features">features</button>
+      </div>
+
+      <div id="tab-config" class="tab-panel">
+        <p class="muted small">paste the auth key printed in your terminal.</p>
+        <input id="keyInput" type="text" placeholder="auth key" autocomplete="off" spellcheck="false" />
+        <div class="row" style="gap:8px">
+          <input id="rootInput" type="text" placeholder="project root" style="flex:1" />
+          <button id="browseBtn">browse</button>
+        </div>
+        <button id="saveSetup" class="primary">save &amp; continue</button>
+        <p class="muted small">stored locally in your browser. never sent anywhere except your Mac.</p>
+        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0 10px"/>
+        <button id="reopenOnboarding" class="ghost" style="width:100%">↺ re-run the onboarding wizard</button>
+      </div>
+
+      <div id="tab-features" class="tab-panel" hidden>
+        <p class="muted small">enable optional capabilities. downloads run in background on your Mac.</p>
+        <div id="settingsFeatureList" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Chat app -->
+  <div id="app" class="app" hidden>
+    <!-- Optional left sidebar on desktop (history) -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <strong>history</strong>
+        <button id="newChatBtn" class="icon-btn" title="new chat">+</button>
+      </div>
+      <div id="sidebarList" class="sidebar-list">
+        <p class="muted small" style="padding:8px">no sessions yet</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button id="toggleSidebarBtn" class="icon-btn" title="toggle sidebar">☰</button>
+        <div class="title">
+          <span class="agent-indicator" id="agentIndicator">
+            <span class="agent-dot" id="agentDot"></span>
+            <span class="agent-state" id="agentStateLabel">idle</span>
+          </span>
+          <strong>qcode</strong>
+          <button id="modelBtn" class="tag tag-btn" title="switch model">offline</button>
+        </div>
+        <button id="settingsBtn" class="icon-btn" title="settings">⚙</button>
+      </header>
+
+      <!-- Chat area (scrollable) -->
+      <div class="chat-header">
+        <span class="dim small" id="chatMeta"></span>
+        <div style="display:flex;gap:4px;margin-left:auto">
+          <button id="copyChatBtn" class="icon-btn" title="copy chat to clipboard" style="font-size:14px">📋</button>
+          <button id="downloadChatBtn" class="icon-btn" title="download chat as .md" style="font-size:14px">⬇</button>
+        </div>
+      </div>
+      <div id="events" class="chat"></div>
+
+      <!-- Composer -->
+      <footer class="composer">
+        <div class="composer-input-wrap">
+          <textarea id="msgInput" rows="2" placeholder="what should qcode do?"></textarea>
+          <button type="button" id="camBtn" class="cam-btn" title="send a photo to vision (requires vision feature)">📷</button>
+          <button type="button" id="micBtn" class="mic-btn" title="hold to record (requires voice feature)">🎤</button>
+        </div>
+        <canvas id="waveform" class="waveform" hidden></canvas>
+        <div class="composer-row">
+          <div class="mode-bar">
+            <button class="mode" data-mode="ask" title="approve every write">🔒 ask</button>
+            <button class="mode" data-mode="plan-first" title="approve a plan, then execute">📝 plan</button>
+            <button class="mode" data-mode="auto-writes" title="auto-approve writes">⚡ auto</button>
+            <button class="mode" data-mode="yolo" title="approve everything">🔥 yolo</button>
+          </div>
+          <div class="composer-actions">
+            <button type="button" id="stopBtn" hidden>⏹ stop</button>
+            <button type="button" id="sendBtn" class="primary">send</button>
+          </div>
+        </div>
+        <div id="contextLine" class="context-line muted small"></div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Approval modal -->
+  <div id="approvalBackdrop" class="backdrop" hidden>
+    <div class="modal">
+      <h3 id="approvalTitle">approval needed</h3>
+      <pre id="approvalDetail"></pre>
+      <div class="row">
+        <button id="rejectBtn">reject</button>
+        <button id="approveBtn" class="primary">approve</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generic confirm modal (delete chat, etc.) -->
+  <div id="confirmBackdrop" class="backdrop" hidden>
+    <div class="modal confirm-modal">
+      <h3 id="confirmTitle">confirm</h3>
+      <p id="confirmBody" class="muted"></p>
+      <div class="row" style="gap:10px;justify-content:flex-end">
+        <button id="confirmCancel">cancel</button>
+        <button id="confirmOk" class="primary danger">delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model switcher modal -->
+  <div id="modelBackdrop" class="backdrop" hidden>
+    <div class="modal">
+      <div class="row">
+        <h3>choose QVAC Fabric LLM model</h3>
+        <button id="modelClose">close</button>
+      </div>
+      <p class="muted small">switching kills llama-server and reloads with the new model. takes ~10s.</p>
+      <h3 style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:6px">local · this mac</h3>
+      <div id="modelList" class="folder-list"></div>
+      <h3 style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:10px">remote · P2P peers</h3>
+      <div id="peerList" class="folder-list"></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:4px 0"/>
+      <h3 style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em">download more</h3>
+      <div id="downloadList" class="folder-list"></div>
+      <div id="downloadProgress" hidden style="font-size:12px;color:var(--warn);padding:8px;background:var(--warn-bg);border-radius:6px"></div>
+    </div>
+  </div>
+
+  <!-- Peer (delegated inference) config modal -->
+  <div id="peerConfigBackdrop" class="backdrop" hidden>
+    <div class="modal peer-modal">
+      <div class="row">
+        <h3>configure delegated peer</h3>
+        <button id="peerConfigClose">close</button>
+      </div>
+      <p class="muted small">
+        point qcode at a running <code>peer-provider.mjs</code> on another machine. the peer handles completions for heavy tasks over Hyperswarm P2P. tools still execute locally.
+      </p>
+
+      <div id="peerStatusLine" class="peer-status-line">
+        <span class="peer-status-dot-large"></span>
+        <span class="peer-status-text">idle</span>
+      </div>
+
+      <div class="peer-field">
+        <label for="peerTopicInput">Topic (64 hex)</label>
+        <input id="peerTopicInput" type="text" placeholder="71636f64652d706565722d64656d6f..." spellcheck="false" autocapitalize="off" autocomplete="off" />
+      </div>
+
+      <div class="peer-field">
+        <label for="peerPubkeyInput">Provider public key (64 hex)</label>
+        <input id="peerPubkeyInput" type="text" placeholder="7374d29e898c1cc248984abfbdcbdcda591442373f5a7c48df48ab0258db2348" spellcheck="false" autocapitalize="off" autocomplete="off" />
+      </div>
+
+      <div class="peer-field">
+        <label for="peerLocationInput">Location label (optional)</label>
+        <input id="peerLocationInput" type="text" placeholder="home server" />
+      </div>
+
+      <p class="muted small" style="margin-top:12px">
+        this only establishes the P2P channel with the peer. choose which model to actually use from the main <strong>model</strong> picker.
+      </p>
+
+      <div class="row" style="gap:10px;justify-content:flex-end;margin-top:10px">
+        <button id="peerDisconnectBtn">disconnect</button>
+        <button id="peerConnectBtn" class="primary">connect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Folder picker modal -->
+  <div id="folderBackdrop" class="backdrop" hidden>
+    <div class="modal">
+      <div class="row">
+        <h3>choose project folder</h3>
+        <button id="folderClose">close</button>
+      </div>
+      <div id="folderPath" class="muted small"></div>
+      <div id="folderList" class="folder-list"></div>
+      <button id="folderSelect" class="primary">use this folder</button>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
