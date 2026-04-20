@@ -5,7 +5,9 @@ dist/
 .env.*
 .DS_Store
 
-# Large binaries and models. The SDK caches weights under ~/.qvac/models.
+# Local-Mac model files live in models/ at runtime. The SDK registry
+# cache also lives under ~/.qvac/models/ (outside the repo).
+models/
 *.gguf
 peer-provider.log
 

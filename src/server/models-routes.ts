@@ -1,4 +1,5 @@
 import type { Express, Request, Response } from "express";
+import os from "node:os";
 import { requireAuth } from "./auth.js";
 import type { ModelProvider } from "./model-provider.js";
 import {
@@ -7,6 +8,24 @@ import {
   type PeerBackendRef,
   type PeerModelKey,
 } from "./peer-config.js";
+
+// True when the host has at least one non-loopback, non-link-local IPv4
+// interface. If false (e.g. WiFi toggled off and no ethernet), the peer
+// is unreachable regardless of what peerBackendRef.status says —
+// Hyperswarm doesn't flip status back to "disconnected" on its own.
+function hasExternalNetwork(): boolean {
+  const ifaces = os.networkInterfaces();
+  for (const addrs of Object.values(ifaces)) {
+    if (!addrs) continue;
+    for (const a of addrs) {
+      if (a.family !== "IPv4") continue;
+      if (a.internal) continue;
+      if (a.address.startsWith("169.254.")) continue;
+      return true;
+    }
+  }
+  return false;
+}
 
 // Peer model catalog: the set of models the UI can offer for a
 // connected peer. The peer may or may not have them cached — switching
@@ -42,8 +61,10 @@ export function registerModelRoutes(
     const state = provider.getState();
     const config = await loadPeerConfig();
 
-    const peerStatus = peerBackendRef?.status ?? "idle";
-    const peerConnected = peerStatus === "connected";
+    const rawPeerStatus = peerBackendRef?.status ?? "idle";
+    const networkUp = hasExternalNetwork();
+    const peerStatus = networkUp ? rawPeerStatus : "disconnected";
+    const peerConnected = networkUp && rawPeerStatus === "connected";
     const activePeerKey = peerBackendRef?.activeModelKey ?? null;
     const forcePeer = peerBackendRef?.forcePeer === true;
     const loadStatus = peerBackendRef?.loadStatus ?? "idle";

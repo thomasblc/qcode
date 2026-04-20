@@ -898,7 +898,12 @@ async function openModelPicker() {
     }
     renderPeers(data.peers || []);
     await refreshDownloadCatalog();
-  } catch (e) { els.modelList.innerHTML = `<p class="muted">error: ${escapeHtml(String(e))}</p>`; }
+  } catch (e) {
+    els.modelList.innerHTML = `<p class="muted">error: ${escapeHtml(String(e))}</p>`;
+    if (els.peerList) {
+      els.peerList.innerHTML = '<p class="muted small" style="padding:8px">peers unreachable (daemon offline)</p>';
+    }
+  }
 }
 
 // Render the P2P peers section of the model picker. Shows each configured
@@ -912,8 +917,9 @@ function renderPeers(peers) {
     els.peerList.innerHTML = '<p class="muted small" style="padding:8px">no peer configured. open Settings → Features → configure peer to add one.</p>';
     return;
   }
+  const browserOnline = navigator.onLine !== false;
   for (const p of peers) {
-    const connected = p.status === "connected";
+    const connected = browserOnline && p.status === "connected";
     const active = p.active === true;
     const loading = p.loading === true;
     const cached = p.cached === true;
